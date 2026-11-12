@@ -1,0 +1,13 @@
+# A small verification suite, not the complete baseline in baseline.yaml.
+name: quick-cpu-metal-check
+model: ${LIOL_MODEL}
+binary: ${LIOL_LLAMA_BENCH}
+prompt_tokens: [16]
+generation_tokens: [8]
+threads: [4]
+gpu_layers: [0, -1]
+batch_sizes: [128]
+ubatch_sizes: [128]
+repetitions: 5
+timeout_s: 180
+shuffle_seed: 42

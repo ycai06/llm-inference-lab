@@ -1,0 +1,303 @@
+{
+  "id": "c2b2d529-5cb1-4089-a42c-683f7d1ecebd",
+  "name": "quick-cpu-metal-check",
+  "status": "completed",
+  "created_at": "2026-11-12T11:34:11.873194+00:00",
+  "finished_at": "2026-11-12T11:34:47.842266+00:00",
+  "config": {
+    "batch_sizes": [
+      128
+    ],
+    "flash_attention": "auto",
+    "generation_tokens": [
+      8
+    ],
+    "gpu_layers": [
+      0,
+      -1
+    ],
+    "mode": "synthetic_warm",
+    "name": "quick-cpu-metal-check",
+    "prompt_tokens": [
+      16
+    ],
+    "repetitions": 5,
+    "shuffle_seed": 42,
+    "threads": [
+      4
+    ],
+    "timeout_s": 180,
+    "ubatch_sizes": [
+      128
+    ]
+  },
+  "metadata": {
+    "environment": {
+      "architecture": "arm64",
+      "disk_available_bytes": 164912558080,
+      "gpu_memory_bytes": null,
+      "gpu_utilization": null,
+      "kernel": "27.0.0",
+      "logical_cpu_count": 10,
+      "os": "Darwin",
+      "os_version": "27.0.1",
+      "physical_cpu_count": 10,
+      "physical_memory_bytes": 34359738368,
+      "power_source_observation": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=22610019)\t75%; discharging; 5:29 remaining present: true",
+      "power_watts": null,
+      "python": "3.13.14",
+      "soc": "Apple M2 Pro",
+      "thermal_pressure": null
+    },
+    "model": {
+      "sha256": "dbf58f4c413b82b27106867eb42f7087e4172a172f6f201e2e11598a6582e504",
+      "size_bytes": 5693872960,
+      "gguf_version": 3,
+      "metadata": {
+        "gemma4.block_count": 48,
+        "gemma4.context_length": 262144,
+        "general.architecture": "gemma4",
+        "general.base_model.0.name": "Gemma 4 12b It",
+        "general.base_model.0.organization": "Google",
+        "general.base_model.0.repo_url": "https://huggingface.co/google/gemma-4-12b-it",
+        "general.base_model.count": 1,
+        "general.basename": "Gemma-4-12B-It",
+        "general.file_type": 12,
+        "general.finetune": "it",
+        "general.license": "apache-2.0",
+        "general.license.link": "https://ai.google.dev/gemma/docs/gemma_4_license",
+        "general.name": "Gemma-4-12B-It",
+        "general.quantization_version": 2,
+        "general.quantized_by": "Unsloth",
+        "general.repo_url": "https://huggingface.co/unsloth",
+        "general.sampling.temp": 1.0,
+        "general.sampling.top_k": 64,
+        "general.sampling.top_p": 0.949999988079071,
+        "general.size_label": "12B",
+        "general.tags": {
+          "array_length": 2
+        },
+        "general.type": "model"
+      }
+    },
+    "engine": {
+      "version": "version: 0.9.0-dev (build 12182, commit fd27b2034)\nbuilt with AppleClang 21.0.0.21000101 for Darwin arm64",
+      "binary_sha256": "6d042ef032678056645d50e8e153cf101c9da616e6ee97455085254cbd6137db"
+    },
+    "timing_source": "llama-bench samples_ns (model loading excluded)",
+    "warmup_policy": "upstream native warmup per case; prompt + one decode token",
+    "kv_policy": "upstream clears KV memory before each measured repetition",
+    "order": "seeded random case order; repetitions contiguous within each case",
+    "scope": "Compact measured data; complete local raw export retains full provenance"
+  },
+  "cases": [
+    {
+      "id": "d5da41c5-5369-46a4-b12d-fba0cccf835a",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 128,
+        "flash_attention": "auto",
+        "gpu_layers": 0,
+        "kind": "decode",
+        "threads": 4,
+        "tokens": 8,
+        "ubatch_size": 128
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 2178022375,
+          "tokens": 8,
+          "tokens_per_second": 3.6730568481877968
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 1666619667,
+          "tokens": 8,
+          "tokens_per_second": 4.800135362857206
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 1414982041,
+          "tokens": 8,
+          "tokens_per_second": 5.653782004431815
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 1251252917,
+          "tokens": 8,
+          "tokens_per_second": 6.393591488426476
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 1331893209,
+          "tokens": 8,
+          "tokens_per_second": 6.006487566676976
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 8256307200,
+        "sampled_cpu_seconds": 31.917648640000003,
+        "resource_samples": 505,
+        "wall_ns": 12344766834
+      }
+    },
+    {
+      "id": "e32bd4e1-132f-4442-a1d6-ab44603c8a5a",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 128,
+        "flash_attention": "auto",
+        "gpu_layers": -1,
+        "kind": "prefill",
+        "threads": 4,
+        "tokens": 16,
+        "ubatch_size": 128
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 202186667,
+          "tokens": 16,
+          "tokens_per_second": 79.13479280016026
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 207563792,
+          "tokens": 16,
+          "tokens_per_second": 77.08473547255294
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 216650375,
+          "tokens": 16,
+          "tokens_per_second": 73.85170692642465
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 218191333,
+          "tokens": 16,
+          "tokens_per_second": 73.33013543668116
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 218356083,
+          "tokens": 16,
+          "tokens_per_second": 73.2748077368653
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 5978587136,
+        "sampled_cpu_seconds": 1.5256230400000002,
+        "resource_samples": 120,
+        "wall_ns": 2951938333
+      }
+    },
+    {
+      "id": "f4fc14b9-faff-469e-b4c2-5f511fcbe73a",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 128,
+        "flash_attention": "auto",
+        "gpu_layers": -1,
+        "kind": "decode",
+        "threads": 4,
+        "tokens": 8,
+        "ubatch_size": 128
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 485867959,
+          "tokens": 8,
+          "tokens_per_second": 16.46537881704605
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 510667292,
+          "tokens": 8,
+          "tokens_per_second": 15.665777161228489
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 497328333,
+          "tokens": 8,
+          "tokens_per_second": 16.08595261754371
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 510968542,
+          "tokens": 8,
+          "tokens_per_second": 15.656541141822386
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 552172209,
+          "tokens": 8,
+          "tokens_per_second": 14.488233687979758
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 5974999040,
+        "sampled_cpu_seconds": 2.6937759999999997,
+        "resource_samples": 161,
+        "wall_ns": 3914970458
+      }
+    },
+    {
+      "id": "b908e522-18b0-4ca8-9bba-a0c02bf91e27",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 128,
+        "flash_attention": "auto",
+        "gpu_layers": 0,
+        "kind": "prefill",
+        "threads": 4,
+        "tokens": 16,
+        "ubatch_size": 128
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 2189733583,
+          "tokens": 16,
+          "tokens_per_second": 7.306824959993318
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 2214559625,
+          "tokens": 16,
+          "tokens_per_second": 7.2249127182565696
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 2062682750,
+          "tokens": 16,
+          "tokens_per_second": 7.7568884502476205
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 2040222416,
+          "tokens": 16,
+          "tokens_per_second": 7.842282230860461
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 1841036166,
+          "tokens": 16,
+          "tokens_per_second": 8.690758115177625
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 8259502080,
+        "sampled_cpu_seconds": 50.114479744,
+        "resource_samples": 689,
+        "wall_ns": 16737920459
+      }
+    }
+  ]
+}

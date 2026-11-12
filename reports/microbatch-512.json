@@ -1,0 +1,303 @@
+{
+  "id": "949a6133-0b05-497f-ade2-f20a89822cc8",
+  "name": "metal-microbatch-tuning",
+  "status": "completed",
+  "created_at": "2026-11-12T11:38:00.424923+00:00",
+  "finished_at": "2026-11-12T11:39:43.177955+00:00",
+  "config": {
+    "batch_sizes": [
+      512
+    ],
+    "flash_attention": "auto",
+    "generation_tokens": [],
+    "gpu_layers": [
+      -1
+    ],
+    "mode": "synthetic_warm",
+    "name": "metal-microbatch-tuning",
+    "prompt_tokens": [
+      512
+    ],
+    "repetitions": 5,
+    "shuffle_seed": 42,
+    "threads": [
+      6
+    ],
+    "timeout_s": 300,
+    "ubatch_sizes": [
+      64,
+      128,
+      256,
+      512
+    ]
+  },
+  "metadata": {
+    "environment": {
+      "architecture": "arm64",
+      "disk_available_bytes": 164129341440,
+      "gpu_memory_bytes": null,
+      "gpu_utilization": null,
+      "kernel": "27.0.0",
+      "logical_cpu_count": 10,
+      "os": "Darwin",
+      "os_version": "27.0.1",
+      "physical_cpu_count": 10,
+      "physical_memory_bytes": 34359738368,
+      "power_source_observation": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=22610019)\t73%; discharging; 4:59 remaining present: true",
+      "power_watts": null,
+      "python": "3.13.14",
+      "soc": "Apple M2 Pro",
+      "thermal_pressure": null
+    },
+    "model": {
+      "sha256": "dbf58f4c413b82b27106867eb42f7087e4172a172f6f201e2e11598a6582e504",
+      "size_bytes": 5693872960,
+      "gguf_version": 3,
+      "metadata": {
+        "gemma4.block_count": 48,
+        "gemma4.context_length": 262144,
+        "general.architecture": "gemma4",
+        "general.base_model.0.name": "Gemma 4 12b It",
+        "general.base_model.0.organization": "Google",
+        "general.base_model.0.repo_url": "https://huggingface.co/google/gemma-4-12b-it",
+        "general.base_model.count": 1,
+        "general.basename": "Gemma-4-12B-It",
+        "general.file_type": 12,
+        "general.finetune": "it",
+        "general.license": "apache-2.0",
+        "general.license.link": "https://ai.google.dev/gemma/docs/gemma_4_license",
+        "general.name": "Gemma-4-12B-It",
+        "general.quantization_version": 2,
+        "general.quantized_by": "Unsloth",
+        "general.repo_url": "https://huggingface.co/unsloth",
+        "general.sampling.temp": 1.0,
+        "general.sampling.top_k": 64,
+        "general.sampling.top_p": 0.949999988079071,
+        "general.size_label": "12B",
+        "general.tags": {
+          "array_length": 2
+        },
+        "general.type": "model"
+      }
+    },
+    "engine": {
+      "version": "version: 0.9.0-dev (build 12182, commit fd27b2034)\nbuilt with AppleClang 21.0.0.21000101 for Darwin arm64",
+      "binary_sha256": "6d042ef032678056645d50e8e153cf101c9da616e6ee97455085254cbd6137db"
+    },
+    "timing_source": "llama-bench samples_ns (model loading excluded)",
+    "warmup_policy": "upstream native warmup per case; prompt + one decode token",
+    "kv_policy": "upstream clears KV memory before each measured repetition",
+    "order": "seeded random case order; repetitions contiguous within each case",
+    "scope": "Compact measured data; complete local raw export retains full provenance"
+  },
+  "cases": [
+    {
+      "id": "cb4a01f5-06af-4e6d-b5d5-bf00e95ff1a6",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 512,
+        "flash_attention": "auto",
+        "gpu_layers": -1,
+        "kind": "prefill",
+        "threads": 6,
+        "tokens": 512,
+        "ubatch_size": 256
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 4202609583,
+          "tokens": 512,
+          "tokens_per_second": 121.82906593824326
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 4417770250,
+          "tokens": 512,
+          "tokens_per_second": 115.89556971641973
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 4545647916,
+          "tokens": 512,
+          "tokens_per_second": 112.63520832703225
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 4523330125,
+          "tokens": 512,
+          "tokens_per_second": 113.19094248067954
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 4607649666,
+          "tokens": 512,
+          "tokens_per_second": 111.1195592360385
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 6092046336,
+        "sampled_cpu_seconds": 1.473495808,
+        "resource_samples": 1149,
+        "wall_ns": 27804862750
+      }
+    },
+    {
+      "id": "c5693d1e-ddf6-44cf-bfb3-0d677b5a9175",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 512,
+        "flash_attention": "auto",
+        "gpu_layers": -1,
+        "kind": "prefill",
+        "threads": 6,
+        "tokens": 512,
+        "ubatch_size": 128
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 3824545584,
+          "tokens": 512,
+          "tokens_per_second": 133.8721133673903
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 3977919125,
+          "tokens": 512,
+          "tokens_per_second": 128.71051017157117
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 3830750042,
+          "tokens": 512,
+          "tokens_per_second": 133.65528796879929
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 3996004875,
+          "tokens": 512,
+          "tokens_per_second": 128.1279718158502
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 3846633750,
+          "tokens": 512,
+          "tokens_per_second": 133.10339202426016
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 6076825600,
+        "sampled_cpu_seconds": 2.4123571200000002,
+        "resource_samples": 1017,
+        "wall_ns": 24214543292
+      }
+    },
+    {
+      "id": "3f1d5529-14c0-4fea-8014-6a205955dc52",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 512,
+        "flash_attention": "auto",
+        "gpu_layers": -1,
+        "kind": "prefill",
+        "threads": 6,
+        "tokens": 512,
+        "ubatch_size": 512
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 4221402333,
+          "tokens": 512,
+          "tokens_per_second": 121.28670986831523
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 4203120500,
+          "tokens": 512,
+          "tokens_per_second": 121.81425681228983
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 4118122750,
+          "tokens": 512,
+          "tokens_per_second": 124.32849409357698
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 4307357584,
+          "tokens": 512,
+          "tokens_per_second": 118.86637921631166
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 4172961458,
+          "tokens": 512,
+          "tokens_per_second": 122.6946390838197
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 6111526912,
+        "sampled_cpu_seconds": 1.81016416,
+        "resource_samples": 1082,
+        "wall_ns": 25810468625
+      }
+    },
+    {
+      "id": "56fd1a3f-99a0-45a0-8def-56c89673406f",
+      "status": "completed",
+      "error": null,
+      "config": {
+        "batch_size": 512,
+        "flash_attention": "auto",
+        "gpu_layers": -1,
+        "kind": "prefill",
+        "threads": 6,
+        "tokens": 512,
+        "ubatch_size": 64
+      },
+      "samples": [
+        {
+          "trial_index": 0,
+          "duration_ns": 4002254250,
+          "tokens": 512,
+          "tokens_per_second": 127.92790463024681
+        },
+        {
+          "trial_index": 1,
+          "duration_ns": 3995419083,
+          "tokens": 512,
+          "tokens_per_second": 128.14675741488418
+        },
+        {
+          "trial_index": 2,
+          "duration_ns": 4100363791,
+          "tokens": 512,
+          "tokens_per_second": 124.86696939520408
+        },
+        {
+          "trial_index": 3,
+          "duration_ns": 4029383875,
+          "tokens": 512,
+          "tokens_per_second": 127.06657292611516
+        },
+        {
+          "trial_index": 4,
+          "duration_ns": 4007332916,
+          "tokens": 512,
+          "tokens_per_second": 127.76577607409347
+        }
+      ],
+      "process": {
+        "sampled_peak_rss_bytes": 6073548800,
+        "sampled_cpu_seconds": 3.7522471680000002,
+        "resource_samples": 1038,
+        "wall_ns": 24895035458
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+name: cpu-metal-baseline
+model: ${LIOL_MODEL}
+binary: ${LIOL_LLAMA_BENCH}
+prompt_tokens: [128, 512, 1024]
+generation_tokens: [64, 128, 256]
+threads: [6]
+gpu_layers: [0, -1]
+batch_sizes: [512]
+ubatch_sizes: [128]
+repetitions: 5
+timeout_s: 1800
+shuffle_seed: 42

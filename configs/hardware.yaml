@@ -1,0 +1,11 @@
+name: cpu-thread-sensitivity
+model: ${LIOL_MODEL}
+binary: ${LIOL_LLAMA_BENCH}
+prompt_tokens: [128]
+generation_tokens: [64]
+threads: [2, 4, 6, 10]
+gpu_layers: [0]
+batch_sizes: [512]
+ubatch_sizes: [128]
+repetitions: 5
+timeout_s: 1800
