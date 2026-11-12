@@ -46,7 +46,7 @@ def test_schema_migration_roundtrip_and_exports(tmp_path: Path) -> None:
     assert result["cases"][0]["process"] == process
     assert reopened.list_experiments()[0]["case_count"] == 1
     with sqlite3.connect(path) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 1
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
 
     json_path, csv_path = tmp_path / "export.json", tmp_path / "export.csv"
     reopened.export_json(experiment_id, json_path)

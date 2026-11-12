@@ -9,9 +9,12 @@ import random
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
+
+if TYPE_CHECKING:
+    from backend.schemas.request_config import RequestConfig
 
 
 class ConfigurationError(ValueError):
@@ -63,7 +66,7 @@ class ExperimentConfig:
         return cases
 
 
-def load_config(path: Path) -> ExperimentConfig:
+def load_config(path: Path) -> ExperimentConfig | RequestConfig:
     try:
         source = path.read_text()
         node = yaml.compose(source, Loader=yaml.SafeLoader)
@@ -81,6 +84,10 @@ def load_config(path: Path) -> ExperimentConfig:
         raise ConfigurationError(f"Cannot read configuration: {exc}") from exc
     if not isinstance(raw, dict):
         raise ConfigurationError("Configuration must be a YAML mapping")
+    if raw.get("mode") == "request_warm":
+        from backend.schemas.request_config import parse_request_config
+
+        return parse_request_config(path, raw)
     unknown = set(raw) - set(ExperimentConfig.__dataclass_fields__)
     if unknown:
         raise ConfigurationError(f"Unsupported configuration keys: {sorted(unknown, key=str)}")

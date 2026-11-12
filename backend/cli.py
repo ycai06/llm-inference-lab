@@ -11,9 +11,12 @@ from pathlib import Path
 
 from backend.analysis.report import report
 from backend.benchmarks.environment import environment
+from backend.benchmarks.request_runner import run_request_experiment
 from backend.benchmarks.runner import run_experiment
 from backend.engines.llama_bench import LlamaBench
+from backend.engines.llama_server import LlamaServer
 from backend.schemas.config import load_config
+from backend.schemas.request_config import RequestConfig
 from backend.storage.database import Store
 
 
@@ -27,6 +30,7 @@ def main() -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     doctor = commands.add_parser("doctor", help="Read hardware and binary capabilities")
     doctor.add_argument("--binary", type=Path)
+    doctor.add_argument("--engine", choices=("bench", "server"), default="bench")
     for command in ("plan", "run"):
         commands.add_parser(command).add_argument("config", type=Path)
     commands.add_parser("list")
@@ -40,9 +44,10 @@ def main() -> int:
     args = parser.parse_args()
     try:
         if args.command == "doctor":
+            adapter = LlamaServer if args.engine == "server" else LlamaBench
             result = {
                 "environment": environment(),
-                "engine": LlamaBench(args.binary).probe() if args.binary else None,
+                "engine": adapter(args.binary).probe() if args.binary else None,
             }
             print(json.dumps(result, indent=2, allow_nan=False))
             return 0
@@ -52,7 +57,11 @@ def main() -> int:
                 print(json.dumps({"config": config.to_dict(), "cases": config.cases()}, indent=2))
                 return 0
             store = Store(args.db)
-            experiment_id = run_experiment(config, LlamaBench(config.binary), store)
+            experiment_id = (
+                run_request_experiment(config, LlamaServer(config.binary), store)
+                if isinstance(config, RequestConfig)
+                else run_experiment(config, LlamaBench(config.binary), store)
+            )
             experiment = store.get_experiment(experiment_id)
             directory = args.db.parent / experiment_id
             store.export_json(experiment_id, directory / "experiment.json")

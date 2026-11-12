@@ -1,5 +1,10 @@
 # Measurement methodology
 
+This page defines `synthetic_warm` microbenchmarks. The separate `request_warm` mode measures
+tokenizer-validated text completions and client-observed streaming latency; see
+[request benchmarks](request-benchmarks.md). Statistics and resource-accounting caveats apply
+to both modes. Their timing samples are stored and reported separately.
+
 ## Supported workload
 
 `synthetic_warm` runs **one synthetic workload per managed llama-bench invocation**.
@@ -14,7 +19,7 @@ chat template, request transport or prompt fixture in this mode. The engine's im
 and recorded commit define the synthetic workload; its RNG state is not exported by LIOL.
 
 The context is derived by llama-bench from token workload and depth. Depth is required to be
-zero in v0.1.0. Arbitrary context size and natural-text fixtures are not implemented;
+zero in synthetic mode. Arbitrary context size and natural-text fixtures belong to request mode;
 unsupported configuration keys fail validation. The adapter requires the inspected flag syntax
 and fails explicitly for older incompatible binaries rather than guessing.
 
@@ -31,7 +36,7 @@ process startup, model loading, warmup and all repetitions. It must never be pre
 request latency or cold-load latency. Cold-load mode requires separate engine instrumentation.
 
 TTFT, mean/median inter-token latency, concurrent throughput, GPU memory, GPU utilization,
-thermal pressure and power are null/unavailable. In a later server mode, TTFT must begin at
+thermal pressure and power are null/unavailable in this mode. In request mode, TTFT begins at
 request dispatch and stop at the first generated-token event, ignoring headers and metadata.
 Network chunks can contain multiple tokens; chunk timing must not be passed off as device
 inter-token timing. See the [official server interface](https://github.com/ggml-org/llama.cpp/blob/fd27b2034905f8dadd8bd6d2cc44595f4929d391/tools/server/README.md).
@@ -83,7 +88,8 @@ Timeouts and cancellation terminate the process group and reap the child. Failed
 canceled and malformed-output cases contain no accepted timing samples. Queued cases are
 canceled on interrupt. Validation failure during preflight produces no running experiment.
 SIGKILL, machine shutdown and interpreter crashes cannot run cleanup; interrupted database
-states require manual inspection in v0.1.0. JSON/CSV exports preserve failure rows.
+states require manual inspection. JSON/CSV exports preserve failure rows.
 
-The schema is version 1 (`backend/storage/migrations/001_initial.sql`). New migrations must
+Schema version 2 preserves synthetic rows from migration 001 and adds separate request rows
+in migration 002. Both SQL files are under `backend/storage/migrations/`. New migrations must
 advance `PRAGMA user_version`. A newer unsupported database version is rejected.

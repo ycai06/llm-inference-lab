@@ -8,9 +8,22 @@ import argparse
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from backend.analysis.report import report
 from backend.storage.database import Store
+
+
+def portable(value: Any, paths: list[str]) -> Any:
+    """Replace configured local paths even inside nested native response/raw JSON fields."""
+    if isinstance(value, dict):
+        return {key: portable(item, paths) for key, item in value.items()}
+    if isinstance(value, list):
+        return [portable(item, paths) for item in value]
+    if isinstance(value, str):
+        for path in sorted(paths, key=len, reverse=True):
+            value = value.replace(path, Path(path).name)
+    return value
 
 
 def main() -> None:
@@ -23,6 +36,8 @@ def main() -> None:
     args = parser.parse_args()
     original = Store(args.db).get_experiment(args.id)
     config = {k: v for k, v in original["config"].items() if k not in ("binary", "model")}
+    if "fixtures" in config:
+        config["fixtures"] = [Path(p).name for p in config["fixtures"]]
     metadata = original["metadata"]
     model = metadata["model"]
     public = {
@@ -46,25 +61,44 @@ def main() -> None:
     }
     for case in original["cases"]:
         process = case["process"] or {}
+        case_config = dict(case["config"])
+        if "fixture" in case_config:
+            case_config["fixture"] = Path(case_config["fixture"]).name
+        resources = process.get("server", process)
         public["cases"].append(
             {
                 "id": case["id"],
                 "status": case["status"],
                 "error": case["error"],
-                "config": case["config"],
+                "config": case_config,
                 "samples": case["samples"],
+                "request_samples": case.get("request_samples", []),
                 "process": {
-                    k: process.get(k)
+                    k: resources.get(k)
                     for k in (
                         "sampled_peak_rss_bytes",
                         "sampled_cpu_seconds",
                         "resource_samples",
                         "wall_ns",
+                        "startup_duration_ms",
                     )
                 },
             }
         )
+        if "fixture" in process:
+            public["cases"][-1]["fixture"] = {
+                k: v for k, v in process["fixture"].items() if k != "path"
+            }
+    for key in ("tokenizer", "sampling", "unavailable_metrics", "workload", "mode"):
+        if key in metadata:
+            public["metadata"][key] = metadata[key]
     args.stem.parent.mkdir(parents=True, exist_ok=True)
+    paths = [
+        original["config"]["model"],
+        original["config"]["binary"],
+        *original["config"].get("fixtures", []),
+    ]
+    public = portable(public, paths)
     args.stem.with_suffix(".json").write_text(json.dumps(public, indent=2, allow_nan=False) + "\n")
     report(public, args.stem.with_suffix(".md"))
 

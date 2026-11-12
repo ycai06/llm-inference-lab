@@ -1,0 +1,84 @@
+Computer systems turn descriptions of work into sequences of operations on physical machines.
+A program may look simple at the source level while its execution depends on caches, virtual
+memory, instruction scheduling, operating system decisions, and communication between devices.
+Careful measurement connects an observed delay to the particular work performed. A useful
+experiment begins with a question, fixes the workload, and records the conditions under which
+the machine executes that workload. The goal is to explain behavior using evidence that another
+person can reproduce.
+
+Consider a processor reading an array. Nearby elements often share cache lines, so sequential
+access can require fewer memory transactions than a scattered traversal. The difference depends
+on the array size, the cache hierarchy, the access order, and competing activity. Timing one
+traversal does not establish a universal memory bandwidth. A repeatable benchmark describes the
+array, uses an explicit access pattern, distinguishes setup from timed work, and reports the
+variation across observations. It also considers whether earlier runs left useful cache state.
+
+Concurrency changes the question being asked. A single request can minimize latency while a
+batch of requests can improve total throughput by sharing work or increasing device occupancy.
+Those outcomes can move in opposite directions. A queue can keep a device busy while making an
+individual request wait longer. A report should distinguish time spent waiting for service from
+time spent executing. Aggregate work per second and the distribution of request delays answer
+different questions and should be presented with explicit units.
+
+Machine learning inference provides many examples of these tradeoffs. Model parameters occupy
+memory, intermediate activations require buffers, and a context cache stores information from
+previous tokens. Processing a prompt uses a different computational shape from generating one
+new token at a time. A larger prompt can expose more parallel work, while successive generated
+tokens depend on earlier outputs. A change that helps prompt processing may have little effect
+on decoding. Separate measurements are necessary before drawing a conclusion about either stage.
+
+The boundary of a timer matters as much as its precision. Starting a process can include dynamic
+linking, loading weights, creating device resources, and compiling execution plans. A warm request
+begins after initialization. Its first output may arrive before the response has finished, so
+time to first token and end-to-end latency are distinct quantities. Network headers, progress
+notifications, and empty events do not establish that the model has produced an output token.
+Measurements should identify the exact event that starts and stops each clock.
+
+Tokenization is another part of the experimental definition. Text characters do not map one to
+one to model tokens, and different model vocabularies can split the same words differently.
+Special-token policies can also change the input. A reproducible test records the source text,
+the tokenizer settings, and the actual token identifiers supplied to the model. Selecting a
+prefix of those identifiers creates an exact token-length workload, although the prefix can
+end before the original passage or instruction is complete. Such a workload measures execution
+properties and does not by itself evaluate answer quality.
+
+Resource counters have boundaries too. Resident memory for a process is not the same quantity
+as total memory used by a system. Shared mappings and unified memory can complicate accounting.
+A sampled maximum can miss a short-lived peak, and a device utilization counter may summarize
+an interval that differs from the request being measured. When a supported counter is unavailable,
+recording that absence is more useful than replacing it with a plausible number. Clear names
+and units allow readers to understand what was observed.
+
+Statistics describe measurements rather than eliminate experimental uncertainty. Repeated trials
+within one process can share temperature, cache state, and background activity. A confidence
+interval built from those observations does not automatically include differences between
+independent sessions. Reporting a median together with the individual samples helps readers
+inspect variation. Small samples give limited information about rare slow requests. A percentile
+near the tail requires enough observations to be meaningful.
+
+Optimization should follow the evidence. Begin with a controlled configuration change, keeping
+the model, workload, decoding settings, and machine conditions comparable. A larger batch might
+reduce repeated dispatch work, but it can also require additional memory or select a less
+efficient execution shape. A negative result narrows the search and can be as informative as
+a successful one. Profiling can then identify whether the remaining cost lies in host scheduling,
+memory traffic, synchronization, or device computation before a code change is proposed.
+
+Describe how these principles would guide the design of a local inference experiment. Explain
+which measurements establish responsiveness, which establish throughput, and which observations
+would be required before attributing a performance change to a particular implementation choice.
+
+A useful implementation also handles failure as part of the experiment. A request can exceed
+its deadline, a child process can exit unexpectedly, or an operator can cancel a long run.
+The resulting record should explain which stage failed and retain the completed observations
+without treating them as a finished comparison. Process ownership helps distinguish resources
+created by the benchmark from unrelated applications. Cleanup should stop the owned process
+group, wait for the child, and release temporary credentials. A later request should begin
+with a known server state rather than inherit unfinished work from an interrupted request.
+
+Finally, reproducibility depends on the relationship between configuration and observation.
+Record both the requested context size and the value reported by the running server. Preserve
+the actual decoding settings, the observed output length, and any warning about stream coverage.
+A compact public report can omit personal paths while retaining exact token identifiers and
+model fingerprints. Full local records can preserve the command and logs needed to diagnose
+an unexpected result. Keeping those responsibilities explicit makes a benchmark useful as an
+engineering instrument rather than merely a table of attractive numbers.

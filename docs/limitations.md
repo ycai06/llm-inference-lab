@@ -1,11 +1,15 @@
 # Scope and remaining work
 
-The v0.1.0 release provides a local CLI with synthetic microbenchmarks, persistence, exports,
-resource samples, statistics, reports and tests.
+The CLI supports synthetic microbenchmarks and managed-server warm text requests with persistence,
+exports, resource samples, statistics, reports and tests.
 
-- No FastAPI endpoints, React dashboard, HTTP streaming, concurrency,
-  cold-load instrumentation or tokenizer-validated fixture experiments yet.
-- No arbitrary context-window control: upstream llama-bench derives context from workload size.
+- No FastAPI endpoints, React dashboard, concurrency or cold-load instrumentation yet.
+- Synthetic context size is derived by llama-bench. Request mode uses a fixed explicit context.
+- Request mode measures native completion over fixture token prefixes, without chat templates
+  or an answer-quality evaluation. Token prefixes may end partway through an instruction.
+- Prefix reuse is disabled; cache-hit and concurrent workloads remain separate future experiments.
+- Streaming token intervals are withheld for incomplete token coverage or coalesced receive events.
+  TTFT is client-observed arrival timing and can include Unicode/transport buffering.
 - Only one quantization was available for the reference experiments. A controlled quantization
   comparison requires compatible weights with recorded source revisions, licenses and checksums.
 - Engine build options are only partially known from the existing release. The full upstream
@@ -23,8 +27,7 @@ resource samples, statistics, reports and tests.
 - Graceful interrupts/timeouts are handled; a hard kill or host shutdown can leave a running row.
 - There is no automatic model/engine download, privileged profiling, upstream modification or CUDA.
 
-Planned work: tokenizer-validated deterministic prompt fixtures via a managed server; request
-and token-event latency; independent blocked/interleaved trials; FastAPI validation/lifecycle tests;
+Planned work: independent blocked/interleaved trials; FastAPI validation/lifecycle tests;
 then a live-data React dashboard and broader length, thread, quantization and concurrency baselines.
 Original C++/Python optimization
 must follow profiling evidence and have a regression test and controlled before/after measurement.

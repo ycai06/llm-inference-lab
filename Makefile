@@ -1,4 +1,4 @@
-.PHONY: install check test smoke-test doctor smoke baseline report
+.PHONY: install check test smoke-test doctor smoke server-smoke server-baseline baseline report
 export UV_CACHE_DIR := $(CURDIR)/.cache/uv
 install:
 	UV_CACHE_DIR=.cache/uv uv sync --locked
@@ -15,6 +15,10 @@ doctor:
 	uv run --frozen liol doctor --binary "$$LIOL_LLAMA_BENCH"
 smoke:
 	uv run --frozen liol run configs/smoke.yaml
+server-smoke:
+	uv run --frozen liol run configs/server-smoke.yaml
+server-baseline:
+	uv run --frozen liol run configs/server-baseline.yaml
 baseline:
 	uv run --frozen liol run configs/baseline.yaml
 report:

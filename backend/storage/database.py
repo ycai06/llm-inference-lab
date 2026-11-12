@@ -13,9 +13,92 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-SCHEMA_VERSION = 1
+from backend.schemas.results import RequestSample
+
+SCHEMA_VERSION = 2
 EXPERIMENT_TERMINAL = {"completed", "failed", "canceled"}
 CASE_TERMINAL = {"completed", "failed", "timeout", "canceled"}
+REQUEST_COLUMNS = (
+    "trial_index",
+    "request_latency_ms",
+    "ttft_ms",
+    "prompt_tokens",
+    "prompt_processed_tokens",
+    "generated_tokens",
+    "target_generated_tokens",
+    "prefill_tokens_per_second",
+    "decode_tokens_per_second",
+    "mean_inter_token_latency_ms",
+    "median_inter_token_latency_ms",
+    "cache_reused_tokens",
+)
+
+
+def _validate_request(sample: dict[str, Any]) -> None:
+    missing = RequestSample.__required_keys__ - sample.keys()
+    if missing:
+        raise ValueError(f"Request sample is missing required fields: {sorted(missing)}")
+    for key in (
+        "trial_index",
+        "prompt_tokens",
+        "prompt_processed_tokens",
+        "generated_tokens",
+        "target_generated_tokens",
+        "cache_reused_tokens",
+    ):
+        value = sample.get(key)
+        minimum = 1 if key in ("prompt_tokens", "target_generated_tokens") else 0
+        if type(value) is not int or value < minimum:
+            raise ValueError(f"{key} must be an integer >= {minimum}")
+    for key in (
+        "request_latency_ms",
+        "ttft_ms",
+        "prefill_tokens_per_second",
+        "decode_tokens_per_second",
+        "mean_inter_token_latency_ms",
+        "median_inter_token_latency_ms",
+    ):
+        value = sample.get(key)
+        if value is None:
+            if key == "request_latency_ms":
+                raise ValueError("request_latency_ms must be finite and positive")
+            continue
+        positive = key in (
+            "request_latency_ms",
+            "prefill_tokens_per_second",
+            "decode_tokens_per_second",
+        )
+        if (
+            type(value) not in (int, float)
+            or not math.isfinite(value)
+            or value < 0
+            or (positive and value == 0)
+        ):
+            raise ValueError(
+                f"{key} must be finite and {'positive' if positive else 'nonnegative'}"
+            )
+    if sample["ttft_ms"] is not None and sample["ttft_ms"] > sample["request_latency_ms"]:
+        raise ValueError("ttft_ms cannot exceed request_latency_ms")
+    if sample["generated_tokens"] > sample["target_generated_tokens"]:
+        raise ValueError("generated_tokens cannot exceed target_generated_tokens")
+    if type(sample.get("early_stop")) is not bool or sample["early_stop"] != (
+        sample["generated_tokens"] < sample["target_generated_tokens"]
+    ):
+        raise ValueError("early_stop must agree with observed and target token counts")
+    for key in ("finish_reason", "output"):
+        if not isinstance(sample.get(key), str):
+            raise ValueError(f"{key} must be a string")
+    for key in ("request", "response"):
+        if not isinstance(sample.get(key), dict):
+            raise ValueError(f"{key} must be an object")
+    if not isinstance(sample.get("events"), list) or any(
+        not isinstance(event, dict) for event in sample["events"]
+    ):
+        raise ValueError("events must be a list of objects")
+    if not isinstance(sample.get("warnings"), list) or any(
+        not isinstance(warning, str) for warning in sample["warnings"]
+    ):
+        raise ValueError("warnings must be a list of strings")
 
 
 def _json(value: Any) -> str:
@@ -118,6 +201,13 @@ class Store:
                 )
             )
         with self._connection() as connection:
+            if (
+                samples
+                and connection.execute(
+                    "SELECT 1 FROM request_samples WHERE case_id = ? LIMIT 1", (case_id,)
+                ).fetchone()
+            ):
+                raise ValueError("A case cannot mix synthetic and request samples")
             cursor = connection.execute(
                 "UPDATE cases SET status = ?, process_json = ?, error = ? WHERE id = ?",
                 (status, process_json, error, case_id),
@@ -142,6 +232,57 @@ class Store:
             )
             if cursor.rowcount != 1:
                 raise KeyError(f"Unknown experiment: {experiment_id}")
+
+    def update_metadata(self, experiment_id: str, metadata: dict[str, Any]) -> None:
+        """Replace metadata after managed processes have supplied final logs/resources."""
+        with self._connection() as connection:
+            cursor = connection.execute(
+                "UPDATE experiments SET metadata_json = ? WHERE id = ?",
+                (_json(metadata), experiment_id),
+            )
+            if cursor.rowcount != 1:
+                raise KeyError(f"Unknown experiment: {experiment_id}")
+
+    def finish_request_case(
+        self,
+        case_id: str,
+        status: str,
+        process: dict[str, Any],
+        samples: list[dict[str, Any]],
+        error: str | None = None,
+    ) -> None:
+        """Save real-request observations independently of synthetic token timings."""
+        if status not in CASE_TERMINAL:
+            raise ValueError(f"Invalid terminal case status: {status}")
+        if samples and status != "completed":
+            raise ValueError("Failed, timed-out, or canceled cases cannot contain valid samples")
+        normalized = []
+        for sample in samples:
+            _validate_request(sample)
+            normalized.append(
+                (case_id, *(sample[column] for column in REQUEST_COLUMNS), _json(sample))
+            )
+        process_json = _json(process)
+        with self._connection() as connection:
+            if (
+                samples
+                and connection.execute(
+                    "SELECT 1 FROM samples WHERE case_id = ? LIMIT 1", (case_id,)
+                ).fetchone()
+            ):
+                raise ValueError("A case cannot mix synthetic and request samples")
+            cursor = connection.execute(
+                "UPDATE cases SET status = ?, process_json = ?, error = ? WHERE id = ?",
+                (status, process_json, error, case_id),
+            )
+            if cursor.rowcount != 1:
+                raise KeyError(f"Unknown case: {case_id}")
+            connection.execute("DELETE FROM request_samples WHERE case_id = ?", (case_id,))
+            columns = ", ".join(("case_id", *REQUEST_COLUMNS, "details_json"))
+            placeholders = ", ".join("?" for _ in range(len(REQUEST_COLUMNS) + 2))
+            connection.executemany(
+                f"INSERT INTO request_samples ({columns}) VALUES ({placeholders})", normalized
+            )
 
     def get_experiment(self, experiment_id: str) -> dict[str, Any]:
         with self._connection() as connection:
@@ -170,6 +311,14 @@ class Store:
                         (case["id"],),
                     )
                 ]
+                case["request_samples"] = [
+                    json.loads(sample["details_json"])
+                    for sample in connection.execute(
+                        "SELECT details_json FROM request_samples WHERE case_id = ? "
+                        "ORDER BY trial_index",
+                        (case["id"],),
+                    )
+                ]
                 cases.append(case)
             experiment["cases"] = cases
             return experiment
@@ -195,6 +344,9 @@ class Store:
 
     def export_csv(self, experiment_id: str, path: Path) -> None:
         experiment = self.get_experiment(experiment_id)
+        if experiment["config"].get("mode") == "request_warm":
+            self._export_request_csv(experiment, path)
+            return
         fields = [
             "experiment_id",
             "experiment_name",
@@ -254,4 +406,71 @@ class Store:
                     row = base | sample
                     if "duration_ns" in sample:
                         row["duration_ms"] = sample["duration_ns"] / 1_000_000
+                    writer.writerow(row)
+
+    def _export_request_csv(self, experiment: dict[str, Any], path: Path) -> None:
+        fields = [
+            "experiment_id",
+            "experiment_name",
+            "experiment_status",
+            "created_at",
+            "mode",
+            "case_id",
+            "case_position",
+            "case_status",
+            "threads",
+            "gpu_layers",
+            "batch_size",
+            "ubatch_size",
+            "context_size",
+            "requested_prompt_tokens",
+            *REQUEST_COLUMNS,
+            "early_stop",
+            "finish_reason",
+            "output",
+            "warnings_json",
+            "events_json",
+            "request_json",
+            "response_json",
+            "sample_json",
+            "error",
+            "case_config_json",
+            "process_json",
+            "experiment_config_json",
+            "metadata_json",
+        ]
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fields)
+            writer.writeheader()
+            for case in experiment["cases"]:
+                base = {
+                    "experiment_id": experiment["id"],
+                    "experiment_name": experiment["name"],
+                    "experiment_status": experiment["status"],
+                    "created_at": experiment["created_at"],
+                    "mode": "request_warm",
+                    "case_id": case["id"],
+                    "case_position": case["position"],
+                    "case_status": case["status"],
+                    "requested_prompt_tokens": case["config"].get("prompt_tokens"),
+                    "error": case["error"],
+                    "case_config_json": _json(case["config"]),
+                    "process_json": _json(case["process"]),
+                    "experiment_config_json": _json(experiment["config"]),
+                    "metadata_json": _json(experiment["metadata"]),
+                }
+                for key in ("threads", "gpu_layers", "batch_size", "ubatch_size", "context_size"):
+                    base[key] = case["config"].get(key)
+                for sample in case["request_samples"] or [{}]:
+                    row = dict(base)
+                    if sample:
+                        row.update({key: sample[key] for key in REQUEST_COLUMNS})
+                        row.update(
+                            {key: sample[key] for key in ("early_stop", "finish_reason", "output")}
+                        )
+                        for key in ("warnings", "events", "request", "response"):
+                            row[f"{key}_json"] = _json(sample[key])
+                        row["sample_json"] = _json(sample)
                     writer.writerow(row)

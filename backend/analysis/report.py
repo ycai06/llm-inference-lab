@@ -48,6 +48,11 @@ def plot_cases(cases: list[dict[str, Any]], output: Path) -> None:
 
 
 def report(experiment: dict[str, Any], output: Path) -> None:
+    if experiment.get("config", {}).get("mode") == "request_warm":
+        from backend.analysis.request_report import report_request
+
+        report_request(experiment, output)
+        return
     lines = [
         f"# {experiment['name']}",
         "",
