@@ -12,9 +12,12 @@ from typing import Any, BinaryIO
 def sha256_file(path: Path, cancel: threading.Event | None = None) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
-        while block := stream.read(4 * 1024 * 1024):
+        while True:
             if cancel is not None and cancel.is_set():
                 raise InterruptedError("Canceled while fingerprinting model")
+            block = stream.read(4 * 1024 * 1024)
+            if not block:
+                break
             digest.update(block)
     return digest.hexdigest()
 
